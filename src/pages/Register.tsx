@@ -29,12 +29,9 @@ const RegisterPage = () => {
 
   // Handlers
   const onSubmit: SubmitHandler<IFormInput> = async (data) => {
-    console.log("DATA", data);
     setIsLoading(true);
 
     try {
-      //  * 2 - Fulfilled => SUCCESS => (OPTIONAL)
-
       const { status } = await axiosInstance.post("/auth/local/register", data);
 
       if (status === 200) {
@@ -56,10 +53,7 @@ const RegisterPage = () => {
         }, 2000);
       }
     } catch (error) {
-      //  * 3 - Rejected => FAILED => (OPTIONAL)
-      console.log(error);
       const errorObj = error as AxiosError<IErrorResponse>;
-      // console.log(error);
       toast.error(`${errorObj.response?.data.error.message}`, {
         position: "bottom-center",
         duration: 4000,

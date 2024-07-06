@@ -1,3 +1,4 @@
+import toast from "react-hot-toast";
 import { NavLink, useLocation } from "react-router-dom";
 
 const Navbar = () => {
@@ -5,14 +6,27 @@ const Navbar = () => {
   const storageKey = "loggedInUser";
   const userDataString = localStorage.getItem(storageKey);
   const userData = userDataString ? JSON.parse(userDataString) : null;
+
   const onLogout = () => {
     localStorage.removeItem(storageKey);
+
+    toast.success("You will navigate to the login page after 1.5 seconds.", {
+      position: "bottom-center",
+      duration: 1500,
+      style: {
+        backgroundColor: "black",
+        color: "white",
+        width: "fit-content",
+      },
+    });
+
     setTimeout(() => {
       location.replace(pathname);
     }, 1500);
   };
+
   return (
-    <nav className="max-w-lg mx-auto mt-7 mb-20 px-3 py-5 rounded-md">
+    <nav className="px-5 mx-auto mb-10 py-5 rounded-md bg-gray-200">
       <ul className="flex items-center justify-between">
         <li className="text-black duration-200 font-semibold text-lg">
           <NavLink to="/">Home</NavLink>
@@ -26,7 +40,7 @@ const Navbar = () => {
               <NavLink to="/profile">Profile</NavLink>
             </li>
             <button
-              className="bg-indigo-500 text-white p-2 rounded-md cursor-pointer"
+              className="bg-indigo-500 text-white px-2 py-1 rounded-md cursor-pointer"
               onClick={onLogout}
             >
               Logout

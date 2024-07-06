@@ -26,17 +26,14 @@ const LoginPage = () => {
   });
 
   const onSubmit: SubmitHandler<IFormInput> = async (data) => {
-    console.log("DATA", data);
     setIsLoading(true);
 
     try {
-      //  * 2 - Fulfilled => SUCCESS => (OPTIONAL)
       const { status, data: resData } = await axiosInstance.post(
         "/auth/local",
         data
       );
-      console.log(data);
-      console.log(resData);
+
       if (status === 200) {
         toast.success("You will navigate to the home page after 2 seconds.", {
           position: "bottom-center",
@@ -47,16 +44,15 @@ const LoginPage = () => {
             width: "fit-content",
           },
         });
+
         localStorage.setItem("loggedInUser", JSON.stringify(resData));
         setTimeout(() => {
           location.replace("/");
         }, 2000);
       }
     } catch (error) {
-      //  * 3 - Rejected => FAILED => (OPTIONAL)
-      console.log(error);
       const errorObj = error as AxiosError<IErrorResponse>;
-      // console.log(error);
+
       toast.error(`${errorObj.response?.data.error.message}`, {
         position: "bottom-center",
         duration: 1500,
@@ -81,6 +77,7 @@ const LoginPage = () => {
       );
     }
   );
+
   return (
     <div className="max-w-md mx-auto">
       <h2 className="text-center mb-4 text-3xl font-semibold">

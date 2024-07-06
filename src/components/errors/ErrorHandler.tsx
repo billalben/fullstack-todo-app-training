@@ -28,7 +28,7 @@ const ErrorHandler = ({ statusCode = 500, title = "Server Error" }: IProps) => {
           {statusCode} - {title}
         </h2>
         <p className="mt-5 lg:text-lg">
-          Oops something went wrong. Try to refresh this page or <br /> feel free to contact us if the problem presists.
+          Oops something went wrong. Try to refresh this page or <br /> feel free to contact us if the problem persists.
         </p>
         <div className="flex items-center justify-center space-x-4 my-10">
           <Link

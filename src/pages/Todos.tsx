@@ -1,44 +1,75 @@
 import useCustomQuery from "../hooks/useAuthenticatedQuery";
 import Paginator from "../components/ui/Paginator";
-import { ChangeEvent, useState } from "react";
+import { ChangeEvent, useState, useCallback } from "react";
 import Button from "../components/ui/Button";
 import axiosInstance from "../config/axios.config";
 import { faker } from "@faker-js/faker";
+import { formatDate, formatTime } from "../lib/utils";
+
+interface TodoAttributes {
+  title: string;
+  description: string;
+  publishedAt: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface Todo {
+  id: number;
+  attributes: TodoAttributes;
+}
+
+const useTodos = (
+  page: number,
+  pageSize: number,
+  sortBy: "DESC" | "ASC",
+  jwt: string
+) => {
+  return useCustomQuery({
+    queryKey: [`todos-page-${page}`, `${pageSize}`, `${sortBy}`],
+    url: `/todos?pagination[pageSize]=${pageSize}&pagination[page]=${page}&sort=createdAt:${sortBy}`,
+    config: {
+      headers: {
+        Authorization: `Bearer ${jwt}`,
+      },
+    },
+  });
+};
+
 const TodosPage = () => {
   const storageKey = "loggedInUser";
   const userDataString = localStorage.getItem(storageKey);
   const userData = userDataString ? JSON.parse(userDataString) : null;
   const [page, setPage] = useState<number>(1);
   const [pageSize, setPageSize] = useState<number>(10);
-  const [sortBy, setSortBy] = useState<string>("DESC");
-  const { isLoading, data, isFetching } = useCustomQuery({
-    queryKey: [`todos-page-${page}`, `${pageSize}`, `${sortBy}`], //**todos */
-    url: `/todos?pagination[pageSize]=${pageSize}&pagination[page]=${page}&sort=createdAt:${sortBy}`,
-    config: {
-      headers: {
-        Authorization: `Bearer ${userData.jwt}`,
-      },
-    },
-  });
+  const [sortBy, setSortBy] = useState<"DESC" | "ASC">("DESC");
+
+  const { isLoading, data, isFetching, error } = useTodos(
+    page,
+    pageSize,
+    sortBy,
+    userData.jwt
+  );
 
   // Handlers
-  const onClickPrev = () => {
-    setPage((prev) => prev - 1);
-  };
-  const onClickNext = () => {
+  const onClickPrev = useCallback(() => {
+    setPage((prev) => Math.max(prev - 1, 1));
+  }, []);
+
+  const onClickNext = useCallback(() => {
     setPage((prev) => prev + 1);
-  };
+  }, []);
 
-  const onChangePageSize = (e: ChangeEvent<HTMLSelectElement>) => {
-    setPageSize(+e.target.value);
-  };
-  const onChangeSortBy = (e: ChangeEvent<HTMLSelectElement>) => {
-    setSortBy(e.target.value);
-  };
+  const onChangePageSize = useCallback((e: ChangeEvent<HTMLSelectElement>) => {
+    setPageSize(Number(e.target.value));
+  }, []);
 
-  const onGenerateTodos = async () => {
-    //100 record
-    for (let i = 0; i < 100; i++) {
+  const onChangeSortBy = useCallback((e: ChangeEvent<HTMLSelectElement>) => {
+    setSortBy(e.target.value as "DESC" | "ASC");
+  }, []);
+
+  const onGenerateTodos = useCallback(async () => {
+    for (let i = 0; i < 15; i++) {
       try {
         const { data } = await axiosInstance.post(
           `/todos`,
@@ -57,24 +88,24 @@ const TodosPage = () => {
         );
         console.log(data);
       } catch (error) {
-        console.log(error);
+        console.error(error);
       }
     }
-  };
+  }, [userData]);
 
   if (isLoading) return <h3>Loading...</h3>;
+  if (error) return <h3>Error loading todos</h3>;
+
+  // const todos = useMemo(() => data?.data || [], [data]);
+  const todos = data?.data || [];
 
   return (
     <>
-      <div className="flex items-center justify-between space-x-2">
-        <Button
-          size="sm"
-          onClick={onGenerateTodos}
-          title="Generate 100 records"
-        >
+      <div className="flex flex-wrap items-center justify-between gap-1">
+        <Button size="sm" onClick={onGenerateTodos} title="Generate 15 records">
           Generate todos
         </Button>
-        <div className="flex items-center justify-between space-x-2 text-md">
+        <div className="flex items-center justify-between gap-1 text-md">
           <select
             className="border-2 border-indigo-600 rounded-md p-2"
             value={sortBy}
@@ -96,28 +127,33 @@ const TodosPage = () => {
           </select>
         </div>
       </div>
-      <div className="my-20 space-y-6">
-        {data.data.length ? (
-          data.data.map(
-            ({
-              id,
-              attributes,
-            }: {
-              id: number;
-              attributes: { title: string };
-            }) => {
-              return (
-                <div
-                  key={id}
-                  className="flex items-center justify-between hover:bg-gray-100 duration-300 p-3 rounded-md even:bg-gray-100"
-                >
-                  <h3 className="w-full font-semibold">
-                    {id} - {attributes.title}
-                  </h3>
-                </div>
-              );
-            }
-          )
+      <div className="my-10 space-y-6">
+        {todos.length ? (
+          todos.map(({ id, attributes }: Todo) => (
+            <div
+              key={id}
+              className="flex flex-col justify-between hover:bg-gray-100 duration-300 p-3 rounded-md even:bg-gray-100"
+            >
+              <h3 className="w-full font-semibold">
+                {id} - {attributes.title}
+              </h3>
+              <p className="border-y my-2 py-2">{attributes.description}</p>
+              <div>
+                <p>
+                  published: {formatDate(attributes.publishedAt)}{" "}
+                  {formatTime(attributes.publishedAt)}
+                </p>
+                <p>
+                  created: {formatDate(attributes.createdAt)}{" "}
+                  {formatTime(attributes.createdAt)}
+                </p>
+                <p>
+                  updated: {formatDate(attributes.updatedAt)}{" "}
+                  {formatTime(attributes.updatedAt)}
+                </p>
+              </div>
+            </div>
+          ))
         ) : (
           <h3>No Todos Yet</h3>
         )}
